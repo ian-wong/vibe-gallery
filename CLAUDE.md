@@ -63,3 +63,39 @@ Uploaded images are saved to `assets/` via the editor.
 
 ### Detail page title spacing
 - Reduced `detail-title` bottom margin from `90px` to `12px` to visually pair the title and live button together
+
+## Deployment
+
+### GitHub
+- Repo: `https://github.com/ian-wong/vibe-gallery`
+- Branch: `main`
+
+### Vercel
+- Live URL: `https://ian-gallery.vercel.app`
+- Project: `ianwong1/vibe-gallery`
+- Auto-deploys on every push to `main` — no manual deploy step needed
+
+### Update workflow
+1. Edit locally via `editor.html` or directly in files, preview at `http://localhost:8080`
+2. Push to GitHub:
+   ```bash
+   git add .
+   git commit -m "your message"
+   git push
+   ```
+3. Vercel detects the push and deploys automatically (~30 seconds)
+
+### Editor note
+`editor.html` uses the File System Access API to write directly to local files — it only works at `localhost:8080`, not on the live Vercel URL. Always edit locally and push to update the live site.
+
+## Changes made (session 2026-06-17, continued)
+
+### Site title
+- Changed `<title>` from `IAN WONG — Vibe Coded` to `IAN WONG - PROJECTS`
+
+### HUD blurb
+- Removed "AND TOYS — ALL BUILT WITH AI." line, condensed to two lines ending with "TOOLS AND TOYS."
+
+### Logo
+- Replaced inline SVG placeholder with `<img src="assets/logo/Logo_svg (64x64).svg" />` — Ian's actual brand mark
+- Removed unused `--logo-fill` and `--logo-stroke` CSS variables

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IAN WONG - PROJECTS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div class="vignette"></div>
+
+  <!-- ───────── HUD ───────── -->
+  <header class="hud hud-top">
+    <div class="hud-left">
+      <button class="logo" id="logo-home" aria-label="Home">
+        <img src="assets/logo/Logo_svg (64x64).svg" alt="Ian Wong logo" width="44" height="44" />
+      </button>
+      <button class="detail-close" id="detail-close" aria-label="Close">
+        <svg viewBox="0 0 20 20"><path d="M2 2l16 16M18 2L2 18" stroke="currentColor" stroke-width="2.2"/></svg>
+      </button>
+      <span class="detail-client mono-bold" id="detail-client-label"></span>
+    </div>
+
+    <div class="hud-center mono">
+      <p class="hud-blurb">
+        IAN WONG IS A PRODUCT DESIGNER<br />
+        VIBE CODING EXPERIMENTS, TOOLS AND TOYS.
+      </p>
+    </div>
+
+    <div class="hud-right">
+      <a class="pill-btn lets-talk" href="mailto:ianwongcontact@gmail.com">Let's Talk</a>
+    </div>
+  </header>
+
+  <div class="hud hud-bottom">
+    <nav class="bottom-nav">
+      <a class="bn-item" href="https://ianwongdesign.com/" target="_blank" rel="noopener">Visit Ian's Portfolio</a>
+    </nav>
+  </div>
+
+  <!-- ───────── DETAIL PAGE ───────── -->
+  <section class="detail" id="detail" aria-hidden="true">
+    <div class="detail-scroll" id="detail-scroll">
+      <div class="detail-inner">
+        <h1 class="detail-title" id="detail-title">PROJECT</h1>
+        <a class="live-btn" id="detail-live-btn" href="#" target="_blank" rel="noopener">Experience it live ↗</a>
+        <hr class="detail-rule" />
+        <div class="detail-meta mono">
+          <span class="dim">REGION &amp; ZONE</span>
+          <div class="detail-tags" id="detail-tags"></div>
+          <span class="detail-year" id="detail-year"></span>
+        </div>
+        <figure class="detail-hero"><img id="detail-hero-img" alt="" /></figure>
+        <p class="detail-blurb" id="detail-blurb"></p>
+        <div id="detail-extra-imgs"></div>
+      </div>
+
+      <div class="related">
+        <h2 class="related-title">Related work</h2>
+        <hr class="related-rule" />
+        <div class="related-grid" id="related-grid"></div>
+        <button class="see-all" id="see-all">See all work</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

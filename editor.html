@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gallery Editor — local only</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --bg: #131313;
+      --panel: #1c1c1c;
+      --line: #2e2e2e;
+      --ink: #e8e4dc;
+      --dim: #8d8a84;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sans: 'Archivo', Helvetica, Arial, sans-serif;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--ink);
+      font-family: var(--sans);
+      height: 100vh; display: flex; flex-direction: column;
+    }
+
+    header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 24px; border-bottom: 1px solid var(--line);
+    }
+    header h1 { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+    header .badge {
+      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+      color: var(--dim); border: 1px solid var(--line); border-radius: 999px;
+      padding: 4px 10px;
+    }
+    header .spacer { flex: 1; }
+
+    button {
+      font-family: var(--sans); font-weight: 600; font-size: 13px;
+      border: none; border-radius: 999px; cursor: pointer;
+      padding: 10px 18px; background: #2b2b2b; color: var(--ink);
+    }
+    button:hover { background: #383838; }
+    button.primary { background: #fff; color: #111; }
+    button.primary:hover { background: #ddd; }
+    button.danger { background: transparent; color: #b66; border: 1px solid #5a2a2a; }
+    button.small { padding: 6px 12px; font-size: 12px; }
+    button:disabled { opacity: .4; cursor: default; }
+
+    main { flex: 1; display: flex; min-height: 0; }
+
+    /* ── sidebar ── */
+    aside {
+      width: 280px; border-right: 1px solid var(--line);
+      overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .proj-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+      padding: 10px 12px; cursor: pointer;
+    }
+    .proj-item.active { border-color: #777; background: #232323; }
+    .proj-item img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; background: #2a2a2a; }
+    .proj-item .pi-name { font-weight: 700; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .proj-item .pi-move { display: flex; flex-direction: column; gap: 2px; }
+    .proj-item .pi-move button { padding: 0 6px; font-size: 9px; line-height: 14px; border-radius: 4px; background: #2b2b2b; }
+
+    /* ── form ── */
+    .form-col { flex: 1; overflow-y: auto; padding: 28px 32px; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block; font-family: var(--mono); font-size: 10px;
+      text-transform: uppercase; letter-spacing: .08em; color: var(--dim);
+      margin-bottom: 6px;
+    }
+    .field input[type='text'], .field textarea {
+      width: 100%; background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; color: var(--ink); font-family: var(--mono); font-size: 13px;
+      padding: 10px 12px; outline: none;
+    }
+    .field input:focus, .field textarea:focus { border-color: #666; }
+    .field textarea { resize: vertical; min-height: 84px; font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+    .field .hint { font-size: 11px; color: var(--dim); margin-top: 5px; font-family: var(--sans); }
+    .row { display: flex; gap: 14px; }
+    .row .field { flex: 1; }
+
+    .color-field { display: flex; align-items: center; gap: 8px; }
+    .color-field input[type='color'] {
+      width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 8px;
+      background: none; padding: 2px; cursor: pointer;
+    }
+    .color-field input[type='text'] { flex: 1; }
+
+    .check { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .check input { width: 18px; height: 18px; accent-color: #fff; }
+
+    .dropzone {
+      border: 1.5px dashed var(--line); border-radius: 8px;
+      padding: 10px 12px; margin-top: 8px;
+      font-size: 12px; color: var(--dim); text-align: center; cursor: pointer;
+    }
+    .dropzone.over { border-color: #999; color: var(--ink); }
+
+    .form-actions { display: flex; gap: 10px; margin: 26px 0 60px; }
+
+    /* ── preview ── */
+    .preview-col {
+      width: 420px; border-left: 1px solid var(--line);
+      padding: 28px 24px; overflow-y: auto;
+    }
+    .preview-col h2 {
+      font-family: var(--mono); font-size: 10px; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--dim); margin-bottom: 14px;
+    }
+    .card-preview {
+      aspect-ratio: 16/10; background: #121212; border: 1px solid #2a2a2a;
+      position: relative; padding: 16px 18px; overflow: hidden;
+    }
+    .card-preview.hl { background: #4d0e0e; border-color: #6b2020; }
+    .cp-client { font-weight: 700; font-size: 13px; }
+    .cp-title {
+      position: absolute; top: 18px; right: 18px;
+      font-family: var(--mono); font-size: 8.5px; letter-spacing: .25em; color: #d8d4cc;
+    }
+    .cp-img {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: 38%; aspect-ratio: 1; object-fit: cover; background: #1e1e1e;
+    }
+    .cp-tags { position: absolute; left: 18px; bottom: 14px; display: flex; gap: 5px; }
+    .cp-tags span {
+      font-family: var(--mono); font-size: 8px; color: #d8d4cc;
+      background: rgba(255,255,255,.1); border-radius: 999px; padding: 4px 8px;
+    }
+    .card-preview.hl .cp-tags span:first-child { background: #8c1d1d; }
+    .cp-year { position: absolute; right: 18px; bottom: 16px; font-family: var(--mono); font-size: 9px; color: #8d8a84; }
+
+    .detail-preview { margin-top: 22px; border-radius: 4px; padding: 26px 18px 22px; text-align: center; }
+    .dp-title { font-weight: 800; font-stretch: 88%; font-size: 34px; line-height: .92; text-transform: uppercase; letter-spacing: -.01em; word-break: break-word; }
+    .dp-blurb { font-size: 12px; line-height: 1.45; margin-top: 16px; text-align: left; opacity: .85; }
+
+    .status {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: #fff; color: #111; font-weight: 600; font-size: 13px;
+      padding: 10px 20px; border-radius: 999px; opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    .status.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gallery Editor</h1>
+    <span class="badge">Local only — not part of the published site</span>
+    <div class="spacer"></div>
+    <button id="connect-btn">1 · Connect folder</button>
+    <button id="save-btn" class="primary" disabled>2 · Save to data.js</button>
+    <button id="download-btn">Download data.js instead</button>
+    <a href="index.html" target="_blank"><button class="small">Open gallery ↗</button></a>
+  </header>
+
+  <main>
+    <aside id="sidebar"></aside>
+
+    <div class="form-col" id="form-col"></div>
+
+    <div class="preview-col">
+      <h2>Card preview</h2>
+      <div class="card-preview" id="cp">
+        <div class="cp-client" id="cp-client"></div>
+        <div class="cp-title" id="cp-title"></div>
+        <img class="cp-img" id="cp-img" alt="" />
+        <div class="cp-tags" id="cp-tags"></div>
+        <div class="cp-year" id="cp-year"></div>
+      </div>
+      <h2 style="margin-top: 26px">Detail page preview</h2>
+      <div class="detail-preview" id="dp">
+        <div class="dp-title" id="dp-title"></div>
+        <div class="dp-blurb" id="dp-blurb"></div>
+      </div>
+    </div>
+  </main>
+
+  <div class="status" id="status"></div>
+
+  <script type="module">
+    import { PROJECTS } from './js/data.js';
+
+    let projects = structuredClone(PROJECTS);
+    let current = 0;
+    let dirHandle = null;
+
+    const $ = (id) => document.getElementById(id);
+    const sidebar = $('sidebar');
+    const formCol = $('form-col');
+
+    function toast(msg) {
+      const s = $('status');
+      s.textContent = msg;
+      s.classList.add('show');
+      clearTimeout(toast.t);
+      toast.t = setTimeout(() => s.classList.remove('show'), 2600);
+    }
+
+    // ───────── sidebar ─────────
+    function renderSidebar() {
+      sidebar.innerHTML = '';
+      projects.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.className = 'proj-item' + (i === current ? ' active' : '');
+        item.innerHTML = `
+          <img src="${p.img}" alt="" />
+          <span class="pi-name">${p.title || 'UNTITLED'}</span>
+          <span class="pi-move">
+            <button data-move="-1" title="Move up">▲</button>
+            <button data-move="1" title="Move down">▼</button>
+          </span>`;
+        item.addEventListener('click', (e) => {
+          const move = e.target.dataset?.move;
+          if (move) {
+            const j = i + Number(move);
+            if (j < 0 || j >= projects.length) return;
+            [projects[i], projects[j]] = [projects[j], projects[i]];
+            current = j;
+            renderAll();
+            return;
+          }
+          current = i;
+          renderAll();
+        });
+        sidebar.appendChild(item);
+      });
+
+      const add = document.createElement('button');
+      add.textContent = '+ New project';
+      add.style.marginTop = '6px';
+      add.addEventListener('click', () => {
+        projects.unshift({
+          id: 'project-' + Date.now().toString(36),
+          client: 'IAN WONG',
+          title: 'NEW PROJECT',
+          tags: ['PRODUCT', 'AI'],
+          year: String(new Date().getFullYear()),
+          accent: '#e8e3d8',
+          ink: '#1d1d1d',
+          highlight: false,
+          img: 'https://picsum.photos/seed/' + Date.now().toString(36) + '/900/900',
+          images: [
+            'https://picsum.photos/seed/' + Date.now().toString(36) + 'a/1600/900',
+            'https://picsum.photos/seed/' + Date.now().toString(36) + 'b/1600/900',
+          ],
+          blurb: 'What it is, why you made it, what you learned.',
+        });
+        current = 0;
+        renderAll();
+      });
+      sidebar.appendChild(add);
+    }
+
+    // ───────── form ─────────
+    function field(label, key, value, hint = '', textarea = false) {
+      return `
+        <div class="field">
+          <label>${label}</label>
+          ${textarea
+            ? `<textarea data-key="${key}">${value}</textarea>`
+            : `<input type="text" data-key="${key}" value="${String(value).replace(/"/g, '&quot;')}" />`}
+          ${hint ? `<div class="hint">${hint}</div>` : ''}
+        </div>`;
+    }
+
+    function colorField(label, key, value) {
+      return `
+        <div class="field">
+          <label>${label}</label>
+          <div class="color-field">
+            <input type="color" data-colorpick="${key}" value="${value}" />
+            <input type="text" data-key="${key}" value="${value}" />
+          </div>
+        </div>`;
+    }
+
+    function imageField(label, key, value, hint, removable = false) {
+      return `
+        <div class="field">
+          <label style="display:flex;justify-content:space-between;align-items:center">${label}
+            ${removable ? `<button class="small danger" data-removeimg="${key.split('.')[1]}" style="padding:2px 10px;font-size:10px">✕ remove</button>` : ''}
+          </label>
+          <input type="text" data-key="${key}" value="${String(value).replace(/"/g, '&quot;')}" />
+          <div class="dropzone" data-drop="${key}">drop an image file here (or click to choose)</div>
+          ${hint ? `<div class="hint">${hint}</div>` : ''}
+        </div>`;
+    }
+
+    function renderForm() {
+      const p = projects[current];
+      if (!p) { formCol.innerHTML = '<p style="color:var(--dim)">No projects yet — add one on the left.</p>'; return; }
+
+      formCol.innerHTML = `
+        ${field('Project title', 'title', p.title, 'Big name on the card and detail page. Uppercase looks best.')}
+        <div class="row">
+          ${field('Client / label', 'client', p.client, 'Small bold name, top-left of the card.')}
+          ${field('Year', 'year', p.year)}
+        </div>
+        ${field('Tags (comma separated)', 'tags', p.tags.join(', '), 'First tag gets the accent pill.')}
+        ${field('Blurb', 'blurb', p.blurb, 'The paragraph on the detail page.', true)}
+        ${field('Live URL', 'link', p.link || '', 'Optional — shows an "Experience it live" button on the detail page. Leave blank to hide it.')}
+        <div class="row">
+          ${colorField('Detail background', 'accent', p.accent)}
+          ${colorField('Detail text colour', 'ink', p.ink)}
+        </div>
+        <div class="field check-wrap">
+          <label class="check"><input type="checkbox" data-check="highlight" ${p.highlight ? 'checked' : ''}/> Featured (red card treatment)</label>
+        </div>
+        ${imageField('Card image', 'img', p.img, 'Square-ish (900×900) looks best.')}
+        ${p.images
+          .map((src, i) =>
+            imageField(
+              i === 0 ? 'Detail image 1 (hero)' : `Detail image ${i + 1}`,
+              `images.${i}`,
+              src,
+              i === 0 ? 'Wide (1600×900) looks best. This is the big one at the top.' : '',
+              p.images.length > 1
+            )
+          )
+          .join('')}
+        <button id="add-img-btn" style="margin-bottom:18px">+ Add detail image</button>
+        <div class="form-actions">
+          <button class="danger" id="delete-btn">Delete this project</button>
+          <button id="dup-btn">Duplicate</button>
+        </div>`;
+
+      formCol.querySelectorAll('[data-key]').forEach((input) => {
+        input.addEventListener('input', () => {
+          setValue(p, input.dataset.key, input.value);
+          renderPreview();
+          if (input.dataset.key === 'title') renderSidebar();
+        });
+      });
+      formCol.querySelectorAll('[data-colorpick]').forEach((picker) => {
+        picker.addEventListener('input', () => {
+          setValue(p, picker.dataset.colorpick, picker.value);
+          formCol.querySelector(`[data-key="${picker.dataset.colorpick}"]`).value = picker.value;
+          renderPreview();
+        });
+      });
+      formCol.querySelector('[data-check="highlight"]').addEventListener('change', (e) => {
+        projects.forEach((o) => (o.highlight = false)); // only one featured card
+        p.highlight = e.target.checked;
+        renderPreview();
+      });
+      formCol.querySelectorAll('[data-drop]').forEach(setupDropzone);
+
+      $('add-img-btn').addEventListener('click', () => {
+        p.images.push('https://picsum.photos/seed/' + Date.now().toString(36) + '/1600/900');
+        renderForm();
+        renderPreview();
+      });
+      formCol.querySelectorAll('[data-removeimg]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          p.images.splice(Number(btn.dataset.removeimg), 1);
+          renderForm();
+          renderPreview();
+        });
+      });
+
+      $('delete-btn').addEventListener('click', () => {
+        if (!confirm(`Delete “${p.title}”?`)) return;
+        projects.splice(current, 1);
+        current = Math.max(0, current - 1);
+        renderAll();
+      });
+      $('dup-btn').addEventListener('click', () => {
+        const copy = structuredClone(p);
+        copy.id = p.id + '-copy';
+        copy.title = p.title + ' COPY';
+        copy.highlight = false;
+        projects.splice(current + 1, 0, copy);
+        current += 1;
+        renderAll();
+      });
+    }
+
+    function setValue(p, key, value) {
+      if (key === 'tags') {
+        p.tags = value.split(',').map((t) => t.trim().toUpperCase()).filter(Boolean);
+      } else if (key.startsWith('images.')) {
+        p.images[Number(key.split('.')[1])] = value.trim();
+      } else {
+        p[key] = key === 'title' || key === 'client' ? value.toUpperCase() : value;
+        if (key === 'title') p.id = value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-');
+      }
+    }
+
+    // ───────── image drop → assets/ ─────────
+    function setupDropzone(zone) {
+      const key = zone.dataset.drop;
+      zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+      zone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        zone.classList.remove('over');
+        const file = e.dataTransfer.files[0];
+        if (file) await saveImage(file, key);
+      });
+      zone.addEventListener('click', () => {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = 'image/*';
+        inp.onchange = () => inp.files[0] && saveImage(inp.files[0], key);
+        inp.click();
+      });
+    }
+
+    async function saveImage(file, key) {
+      if (!dirHandle) {
+        toast('Click “Connect folder” first so I can copy images in');
+        return;
+      }
+      try {
+        const assets = await dirHandle.getDirectoryHandle('assets', { create: true });
+        const safeName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-');
+        const fh = await assets.getFileHandle(safeName, { create: true });
+        const w = await fh.createWritable();
+        await w.write(file);
+        await w.close();
+        const path = 'assets/' + safeName;
+        setValue(projects[current], key, path);
+        renderForm();
+        renderPreview();
+        toast(`Saved image → ${path}`);
+      } catch (err) {
+        toast('Could not save image: ' + err.message);
+      }
+    }
+
+    // ───────── preview ─────────
+    function renderPreview() {
+      const p = projects[current];
+      if (!p) return;
+      $('cp').className = 'card-preview' + (p.highlight ? ' hl' : '');
+      $('cp-client').textContent = p.client;
+      $('cp-title').textContent = p.title;
+      $('cp-img').src = p.img;
+      $('cp-tags').innerHTML = p.tags.map((t) => `<span>${t}</span>`).join('');
+      $('cp-year').textContent = p.year;
+      const dp = $('dp');
+      dp.style.background = p.accent;
+      dp.style.color = p.ink;
+      $('dp-title').textContent = p.title;
+      $('dp-blurb').textContent = p.blurb;
+    }
+
+    function renderAll() { renderSidebar(); renderForm(); renderPreview(); }
+
+    // ───────── serialize back to data.js ─────────
+    const q = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+
+    function serialize() {
+      const body = projects
+        .map((p) => `  {
+    id: ${q(p.id)},
+    client: ${q(p.client)},
+    title: ${q(p.title)},
+    tags: [${p.tags.map(q).join(', ')}],
+    year: ${q(p.year)},
+    accent: ${q(p.accent)},
+    ink: ${q(p.ink)},
+    highlight: ${!!p.highlight},
+    img: ${q(p.img)},
+    link: ${q(p.link || '')},
+    images: [
+      ${p.images.map(q).join(',\n      ')},
+    ],
+    blurb:
+      ${q(p.blurb)},
+  },`)
+        .join('\n');
+
+      return `// ─────────────────────────────────────────────────────────────
+// Generated by editor.html — you can still edit this by hand.
+// Each project becomes a card inside the sphere gallery.
+// ─────────────────────────────────────────────────────────────
+
+export const PROJECTS = [
+${body}
+];
+`;
+    }
+
+    // ───────── save / download ─────────
+    $('connect-btn').addEventListener('click', async () => {
+      if (!window.showDirectoryPicker) {
+        toast('This browser can’t write files — use “Download data.js instead”');
+        return;
+      }
+      try {
+        dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        // sanity check: make sure this is the vibe-gallery folder
+        try { await dirHandle.getDirectoryHandle('js'); }
+        catch {
+          toast('That doesn’t look like the vibe-gallery folder (no js/ inside) — try again');
+          dirHandle = null;
+          return;
+        }
+        $('save-btn').disabled = false;
+        $('connect-btn').textContent = '✓ Folder connected';
+        toast('Connected — Save and image drops now write directly');
+      } catch { /* user cancelled */ }
+    });
+
+    $('save-btn').addEventListener('click', async () => {
+      try {
+        const js = await dirHandle.getDirectoryHandle('js');
+        const fh = await js.getFileHandle('data.js', { create: true });
+        const w = await fh.createWritable();
+        await w.write(serialize());
+        await w.close();
+        toast('Saved! Refresh the gallery tab to see it');
+      } catch (err) {
+        toast('Save failed: ' + err.message);
+      }
+    });
+
+    $('download-btn').addEventListener('click', () => {
+      const blob = new Blob([serialize()], { type: 'text/javascript' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'data.js';
+      a.click();
+      toast('Downloaded — replace vibe-gallery/js/data.js with it');
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
